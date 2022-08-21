@@ -12,13 +12,13 @@ You will need to modify the $buildExecutable variable below to match the file na
 
 #>
 
-$buildExecutable = "ProjectBuild.exe"
+$buildExecutable = "Holus.exe"
 $basePath = "C:\PixelStreamer\Downloads"
 
 Write-Output "Starting UE4-Pixel-Streamer-Bootstrap.ps1 from:", $basePath
 
 # Create basePath if unless it already exists.
-if(!(Test-Path -Path $basePath )){
+if (!(Test-Path -Path $basePath )) {
     New-Item -ItemType directory -Path $basePath
 }
 
@@ -43,17 +43,17 @@ Write-Output "UE4 Project Downloaded and Extracted"
 
 Write-Output "Install UE4 Prerequisites"
 Install-WindowsFeature NET-Framework-Core
-Start-Process -FilePath "C:\PixelStreamer\WindowsNoEditor\Engine\Extras\Redist\en-us\UE4PrereqSetup_x64.exe" -ArgumentList "/passive /quiet /norestart /log C:\PixelStreamer\WindowsNoEditor\Engine\Extras\Redist\en-us\UE4PreReqInstall.log" -Wait
+Start-Process -FilePath "C:\PixelStreamer\Windows\Engine\Extras\Redist\en-us\UEPrereqSetup_x64.exe" -ArgumentList "/passive /quiet /norestart /log C:\PixelStreamer\Windows\Engine\Extras\Redist\en-us\UE4PreReqInstall.log" -Wait
 Write-Output "UE4 Prerequisites Installed"
 
 # Run Pixel Streamer as SYSTEM and on startup
 $principal = New-ScheduledTaskPrincipal -UserID "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
-$action = New-ScheduledTaskAction -Execute "C:\PixelStreamer\WindowsNoEditor\$buildExecutable" -Argument "-PixelStreamingIP=localhost -PixelStreamingPort=8888 -RenderOffScreen"
+$action = New-ScheduledTaskAction -Execute "C:\PixelStreamer\Windows\$buildExecutable" -Argument "-PixelStreamingIP=localhost -PixelStreamingPort=8888 -RenderOffScreen"
 $trigger = New-ScheduledTaskTrigger -AtStartup
 Register-ScheduledTask -Action $action -Principal $principal -Trigger $trigger -TaskName "UE4PixelStreamer-Project-Launch" -Description "UE4PixelStreamer-Project-Launch"
 
 $principal = New-ScheduledTaskPrincipal -UserID "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
-$action = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "C:\PixelStreamer\WindowsNoEditor\Samples\PixelStreaming\WebServers\SignallingWebServer\platform_scripts\cmd\Start_SignallingServer.ps1"
+$action = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "C:\PixelStreamer\Windows\Samples\PixelStreaming\WebServers\SignallingWebServer\platform_scripts\cmd\Start_SignallingServer.ps1"
 $trigger = New-ScheduledTaskTrigger -AtStartup
 Register-ScheduledTask -Action $action -Principal $principal -Trigger $trigger -TaskName "UE4PixelStreamer-SignallingServer-Launch" -Description "UE4PixelStreamer-SignallingServer-Launch"
 

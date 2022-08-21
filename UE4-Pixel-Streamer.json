@@ -22,14 +22,19 @@
         "g4dn.4xlarge",
         "g4dn.8xlarge",
         "g4dn.12xlarge",
-        "g4dn.16xlarge"
+        "g4dn.16xlarge",
+        "g4ad.xlarge",
+        "g4ad.2xlarge",
+        "g4ad.4xlarge",
+        "g4ad.8xlarge",
+        "g4ad.16xlarge"
       ]
     },
-    "DiskSize" : {
-        "Description": "Disk size in GB",
-        "Type": "Number",
-        "Default": "50",
-        "MinValue": "30"
+    "DiskSize": {
+      "Description": "Disk size in GB",
+      "Type": "Number",
+      "Default": "50",
+      "MinValue": "30"
     },
     "UserPasswd": {
       "Description": "Password for the \"Administrator\" user on Windows instances. The default password is Ch4ng3M3! ",
@@ -38,7 +43,7 @@
       "Type": "String",
       "AllowedPattern": "^((?=.*[a-z])(?=.*[A-Z])(?=.*[\\d])|(?=.*[a-z])(?=.*[A-Z])(?=.*[\\W_])|(?=.*[a-z])(?=.*[\\d])(?=.*[\\W_])|(?=.*[A-Z])(?=.*[\\d])(?=.*[\\W_])).+$",
       "ConstraintDescription": "Password must contain at least one element from three of the following sets: lowercase letters, uppercase letters, base 10 digits, non-alphanumeric characters",
-      "NoEcho" : "true"
+      "NoEcho": "true"
     },
     "OsVersion": {
       "Type": "String",
@@ -71,15 +76,15 @@
       "Type": "String",
       "Description": "Location of bootstrap Powershell script. Format of https://bucket-name.region.amazonaws.com/Path/UE4-Pixel-Streamer-Bootstrap.ps1"
     },
-    "LatestWindows2019AmiId":{
+    "LatestWindows2019AmiId": {
       "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
       "Default": "/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base"
     },
-    "LatestWindows2016AmiId":{
+    "LatestWindows2016AmiId": {
       "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
       "Default": "/aws/service/ami-windows-latest/Windows_Server-2016-English-Full-Base"
     },
-    "LatestWindows2012AmiId":{
+    "LatestWindows2012AmiId": {
       "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
       "Default": "/aws/service/ami-windows-latest/Windows_Server-2012-R2_RTM-English-64Bit-Base"
     }
@@ -92,21 +97,48 @@
     }
   },
   "Conditions": {
-    "IsWindows2019": { "Fn::Equals": [{"Ref" : "OsVersion"}, "WindowsServer2019"] },
-    "IsWindows2016": { "Fn::Equals": [{"Ref" : "OsVersion"}, "WindowsServer2016"] },
-    "IsWindows2012": { "Fn::Equals": [{"Ref" : "OsVersion"}, "WindowsServer2012R2"] },
-    "CreateWindows" : { 
-      "Fn::Or" : [ 
-        { "Condition" : "IsWindows2019" }, 
-        { "Condition" : "IsWindows2016" },
-        { "Condition" : "IsWindows2012" }
+    "IsWindows2019": {
+      "Fn::Equals": [
+        {
+          "Ref": "OsVersion"
+        },
+        "WindowsServer2019"
+      ]
+    },
+    "IsWindows2016": {
+      "Fn::Equals": [
+        {
+          "Ref": "OsVersion"
+        },
+        "WindowsServer2016"
+      ]
+    },
+    "IsWindows2012": {
+      "Fn::Equals": [
+        {
+          "Ref": "OsVersion"
+        },
+        "WindowsServer2012R2"
+      ]
+    },
+    "CreateWindows": {
+      "Fn::Or": [
+        {
+          "Condition": "IsWindows2019"
+        },
+        {
+          "Condition": "IsWindows2016"
+        },
+        {
+          "Condition": "IsWindows2012"
+        }
       ]
     }
   },
   "Resources": {
     "WindowsInstance": {
       "Type": "AWS::EC2::Instance",
-      "Condition" : "CreateWindows",
+      "Condition": "CreateWindows",
       "Properties": {
         "InstanceType": {
           "Ref": "InstanceType"
@@ -116,16 +148,22 @@
         },
         "ImageId": {
           "Fn::If": [
-            "IsWindows2019", 
-            {"Ref": "LatestWindows2019AmiId"}, 
+            "IsWindows2019",
+            {
+              "Ref": "LatestWindows2019AmiId"
+            },
             {
               "Fn::If": [
-                "IsWindows2016", 
-                {"Ref": "LatestWindows2016AmiId"}, 
+                "IsWindows2016",
+                {
+                  "Ref": "LatestWindows2016AmiId"
+                },
                 {
                   "Fn::If": [
-                    "IsWindows2016", 
-                    {"Ref": "LatestWindows2012AmiId"}, 
+                    "IsWindows2016",
+                    {
+                      "Ref": "LatestWindows2012AmiId"
+                    },
                     "None"
                   ]
                 }
@@ -133,34 +171,38 @@
             }
           ]
         },
-        "SecurityGroupIds": [{
-          "Ref": "DCVSecurityGroup"
-        }],
-        "Tags" : [
-          { 
-            "Key" : "RemoteVisualization",
-            "Value" : "DCV-preview"
+        "SecurityGroupIds": [
+          {
+            "Ref": "DCVSecurityGroup"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "RemoteVisualization",
+            "Value": "DCV-preview"
           },
-          { 
-            "Key" : "Name",
-            "Value" : { "Ref": "AWS::StackName" }
+          {
+            "Key": "Name",
+            "Value": {
+              "Ref": "AWS::StackName"
+            }
           },
-          { 
-            "Key" : "DCV",
-            "Value" : "DCV"
+          {
+            "Key": "DCV",
+            "Value": "DCV"
           }
         ],
         "KeyName": {
           "Ref": "KeyPairName"
         },
-        "BlockDeviceMappings" : [
+        "BlockDeviceMappings": [
           {
-            "DeviceName" : "/dev/sda1",
-            "Ebs" : {
-              "VolumeSize" : {
-                "Ref" : "DiskSize"
+            "DeviceName": "/dev/sda1",
+            "Ebs": {
+              "VolumeSize": {
+                "Ref": "DiskSize"
               },
-              "VolumeType" : "gp2"
+              "VolumeType": "gp2"
             }
           }
         ],
@@ -173,8 +215,14 @@
                 "cfn-init.exe -v ",
                 " -c initialize ",
                 " -r WindowsInstance ",
-                " --region ", { "Ref": "AWS::Region" },
-                " -s ", { "Ref": "AWS::StackName" },
+                " --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                " -s ",
+                {
+                  "Ref": "AWS::StackName"
+                },
                 "\n",
                 "</script>\n"
               ]
@@ -206,23 +254,27 @@
                   "Fn::Join": [
                     "",
                     [
-                      { "Ref": "PixelStreamerBootstrapLocation" }
+                      {
+                        "Ref": "PixelStreamerBootstrapLocation"
+                      }
                     ]
                   ]
                 },
                 "authentication": "S3AccessCreds"
-              },              
+              },
               "C:\\PixelStreamer\\Downloads\\PixelStreamerProject.zip": {
                 "source": {
                   "Fn::Join": [
                     "",
                     [
-                      { "Ref": "PixelStreamerBuildLocation" }
+                      {
+                        "Ref": "PixelStreamerBuildLocation"
+                      }
                     ]
                   ]
                 },
                 "authentication": "S3AccessCreds"
-              },              
+              },
               "C:\\dcv-install\\install.ps1": {
                 "source": {
                   "Fn::Join": [
@@ -243,12 +295,32 @@
                       "$depBucket = \"nice-dcv-cfn\"\r\n",
                       "$devConPackage = \"DevCon.zip\"\r\n",
                       "$dcvPackageName = \"nice-dcv-server-x64-Release-2020.0-latest.msi\"\r\n",
-                      "$firefoxPackage = \"", { "Fn::FindInMap": [ "VersionMap", "firefox", "default" ] }, "\"\r\n",
+                      "$firefoxPackage = \"",
+                      {
+                        "Fn::FindInMap": [
+                          "VersionMap",
+                          "firefox",
+                          "default"
+                        ]
+                      },
+                      "\"\r\n",
                       "$userName = \"Administrator\"\r\n",
-                      "$userPasswd = \"", { "Ref": "UserPasswd" }, "\"\r\n",
+                      "$userPasswd = \"",
+                      {
+                        "Ref": "UserPasswd"
+                      },
+                      "\"\r\n",
                       "$logLevel = \"info\"\r\n",
-                      "$waitHandle = \"", { "Ref": "InstanceWaitHandle" }, "\"\r\n",
-                      "$windowsVersion = \"", { "Ref": "OsVersion" }, "\"\r\n"
+                      "$waitHandle = \"",
+                      {
+                        "Ref": "InstanceWaitHandle"
+                      },
+                      "\"\r\n",
+                      "$windowsVersion = \"",
+                      {
+                        "Ref": "OsVersion"
+                      },
+                      "\"\r\n"
                     ]
                   ]
                 }
@@ -386,7 +458,7 @@
     },
     "WindowsInstanceWaitCondition": {
       "Type": "AWS::CloudFormation::WaitCondition",
-      "Condition" : "CreateWindows",     
+      "Condition": "CreateWindows",
       "DependsOn": "WindowsInstance",
       "Properties": {
         "Handle": {
@@ -398,79 +470,225 @@
     "InstanceWaitHandle": {
       "Type": "AWS::CloudFormation::WaitConditionHandle"
     },
-    "DCVSecurityGroup" : {
-      "Type" : "AWS::EC2::SecurityGroup",
-      "Properties" : {
-        "GroupDescription" : "DCV Security Group",
-        "SecurityGroupIngress" : [
-          {"IpProtocol": "tcp", "FromPort": "22", "ToPort": "22", "CidrIp": {"Ref": "NiceDCVAccessCIDR"}, "Description": "SSH Port"},
-          {"IpProtocol": "tcp", "FromPort": "3389", "ToPort": "3389", "CidrIp": {"Ref": "NiceDCVAccessCIDR"}, "Description": "Remote Desktop Port"},
-          {"IpProtocol": "tcp", "FromPort": "8443", "ToPort": "8443", "CidrIp": {"Ref": "NiceDCVAccessCIDR"}, "Description": "NICE DCV Port"},
-          {"IpProtocol": "tcp", "FromPort": "80", "ToPort": "80", "CidrIp": {"Ref": "PixelStreamingAccessCIDR"}, "Description": "UE4 Pixel Streamer - Webserver Port"},
-          {"IpProtocol": "tcp", "FromPort": "443", "ToPort": "443", "CidrIp": {"Ref": "PixelStreamingAccessCIDR"}, "Description": "UE4 Pixel Streamer - Secure Webserver Port"},
-          {"IpProtocol": "tcp", "FromPort": "8888", "ToPort": "8888", "CidrIp": {"Ref": "PixelStreamingAccessCIDR"}, "Description": "UE4 Pixel Streamer - Application Streaming Port"},
-          {"IpProtocol": "udp", "FromPort": "8888", "ToPort": "8888", "CidrIp": {"Ref": "PixelStreamingAccessCIDR"}, "Description": "UE4 Pixel Streamer - Application Streaming Port"},
-          {"IpProtocol": "tcp", "FromPort": "19302", "ToPort": "19303", "CidrIp": {"Ref": "PixelStreamingAccessCIDR"}, "Description": "UE4 Pixel Streamer - STUN/TURN Ports"},
-          {"IpProtocol": "udp", "FromPort": "19302", "ToPort": "19303", "CidrIp": {"Ref": "PixelStreamingAccessCIDR"}, "Description": "UE4 Pixel Streamer - STUN/TURN Ports"}
+    "DCVSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "DCV Security Group",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "NiceDCVAccessCIDR"
+            },
+            "Description": "SSH Port"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "3389",
+            "ToPort": "3389",
+            "CidrIp": {
+              "Ref": "NiceDCVAccessCIDR"
+            },
+            "Description": "Remote Desktop Port"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "8443",
+            "ToPort": "8443",
+            "CidrIp": {
+              "Ref": "NiceDCVAccessCIDR"
+            },
+            "Description": "NICE DCV Port"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": {
+              "Ref": "PixelStreamingAccessCIDR"
+            },
+            "Description": "UE4 Pixel Streamer - Webserver Port"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "443",
+            "ToPort": "443",
+            "CidrIp": {
+              "Ref": "PixelStreamingAccessCIDR"
+            },
+            "Description": "UE4 Pixel Streamer - Secure Webserver Port"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "8888",
+            "ToPort": "8888",
+            "CidrIp": {
+              "Ref": "PixelStreamingAccessCIDR"
+            },
+            "Description": "UE4 Pixel Streamer - Application Streaming Port"
+          },
+          {
+            "IpProtocol": "udp",
+            "FromPort": "8888",
+            "ToPort": "8888",
+            "CidrIp": {
+              "Ref": "PixelStreamingAccessCIDR"
+            },
+            "Description": "UE4 Pixel Streamer - Application Streaming Port"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "19302",
+            "ToPort": "19303",
+            "CidrIp": {
+              "Ref": "PixelStreamingAccessCIDR"
+            },
+            "Description": "UE4 Pixel Streamer - STUN/TURN Ports"
+          },
+          {
+            "IpProtocol": "udp",
+            "FromPort": "19302",
+            "ToPort": "19303",
+            "CidrIp": {
+              "Ref": "PixelStreamingAccessCIDR"
+            },
+            "Description": "UE4 Pixel Streamer - STUN/TURN Ports"
+          }
         ]
       }
     }
   },
   "Outputs": {
     "WindowsInstanceId": {
-      "Value": { "Ref": "WindowsInstance" },
-      "Condition" : "CreateWindows",
+      "Value": {
+        "Ref": "WindowsInstance"
+      },
+      "Condition": "CreateWindows",
       "Description": "Instance ID for the newly created EC2 instance"
     },
     "WindowsPublicDNS": {
-      "Value": { "Fn::GetAtt": [ "WindowsInstance", "PublicDnsName" ] },      
-      "Condition" : "CreateWindows",     
+      "Value": {
+        "Fn::GetAtt": [
+          "WindowsInstance",
+          "PublicDnsName"
+        ]
+      },
+      "Condition": "CreateWindows",
       "Description": "Web URL for Streaming Server, using DNS Name of the newly created EC2 instance"
     },
     "WindowsPublicIp": {
-      "Value": { "Fn::GetAtt": [ "WindowsInstance", "PublicIp" ] },
-      "Condition" : "CreateWindows",     
+      "Value": {
+        "Fn::GetAtt": [
+          "WindowsInstance",
+          "PublicIp"
+        ]
+      },
+      "Condition": "CreateWindows",
       "Description": "Public IP address of the newly created EC2 instance"
     },
     "WindowsDcvURL": {
-      "Value": { "Fn::Join": [ "", [ "https://", { "Fn::GetAtt": [ "WindowsInstance", "PublicIp" ] }, ":8443" ] ] },
-      "Condition" : "CreateWindows",     
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Fn::GetAtt": [
+                "WindowsInstance",
+                "PublicIp"
+              ]
+            },
+            ":8443"
+          ]
+        ]
+      },
+      "Condition": "CreateWindows",
       "Description": "Connection URL for web access to the newly created EC2 instance via NICE DCV"
     }
   },
   "Metadata": {
-    "AWS::CloudFormation::Interface" : {
-      "ParameterGroups" : [
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
         {
-          "Label" : { "default": "EC2" },
-          "Parameters" : [ "InstanceType", "OsVersion", "DiskSize", "KeyPairName" ]
+          "Label": {
+            "default": "EC2"
+          },
+          "Parameters": [
+            "InstanceType",
+            "OsVersion",
+            "DiskSize",
+            "KeyPairName"
+          ]
         },
         {
-          "Label" : { "default": "Credentials" },
-          "Parameters" : [ "UserPasswd" ]
+          "Label": {
+            "default": "Credentials"
+          },
+          "Parameters": [
+            "UserPasswd"
+          ]
         },
         {
-          "Label" : { "default": "Pixel Streamer Properties" },
-          "Parameters" : [ "PixelStreamerBootstrapLocation", "PixelStreamerBuildLocation", "PixelStreamingAccessCIDR", "NiceDCVAccessCIDR" ]
+          "Label": {
+            "default": "Pixel Streamer Properties"
+          },
+          "Parameters": [
+            "PixelStreamerBootstrapLocation",
+            "PixelStreamerBuildLocation",
+            "PixelStreamingAccessCIDR",
+            "NiceDCVAccessCIDR"
+          ]
         },
         {
-          "Label" : { "default": "Windows AMIs" },
-          "Parameters" : [ "LatestWindows2019AmiId", "LatestWindows2016AmiId", "LatestWindows2012AmiId" ]
+          "Label": {
+            "default": "Windows AMIs"
+          },
+          "Parameters": [
+            "LatestWindows2019AmiId",
+            "LatestWindows2016AmiId",
+            "LatestWindows2012AmiId"
+          ]
         }
       ],
-      "ParameterLabels" : {
-        "InstanceType": {"default": "Instance Type:"},
-        "DiskSize": {"default": "Disk Size:"},
-        "KeyPairName": {"default": "Key pair name:"},
-        "UserPasswd": {"default": "Password:"},
-        "OsVersion": {"default": "Operating System:"},
-        "PixelStreamingAccessCIDR": {"default": "Pixel Streaming Access CIDR:"},
-        "NiceDCVAccessCIDR": {"default": "NICE DCV Access CIDR:"},
-        "PixelStreamerBuildLocation": {"default": "Pixel Streamer Build Location:"},
-        "PixelStreamerBootstrapLocation": {"default": "Pixel Streamer Bootstrap Location:"},
-        "LatestWindows2019AmiId": {"default": "Windows 2019 AMI:"},
-        "LatestWindows2016AmiId": {"default": "Windows 2016 AMI:"},
-        "LatestWindows2012AmiId": {"default": "Windows 2012 AMI:"}
+      "ParameterLabels": {
+        "InstanceType": {
+          "default": "Instance Type:"
+        },
+        "DiskSize": {
+          "default": "Disk Size:"
+        },
+        "KeyPairName": {
+          "default": "Key pair name:"
+        },
+        "UserPasswd": {
+          "default": "Password:"
+        },
+        "OsVersion": {
+          "default": "Operating System:"
+        },
+        "PixelStreamingAccessCIDR": {
+          "default": "Pixel Streaming Access CIDR:"
+        },
+        "NiceDCVAccessCIDR": {
+          "default": "NICE DCV Access CIDR:"
+        },
+        "PixelStreamerBuildLocation": {
+          "default": "Pixel Streamer Build Location:"
+        },
+        "PixelStreamerBootstrapLocation": {
+          "default": "Pixel Streamer Bootstrap Location:"
+        },
+        "LatestWindows2019AmiId": {
+          "default": "Windows 2019 AMI:"
+        },
+        "LatestWindows2016AmiId": {
+          "default": "Windows 2016 AMI:"
+        },
+        "LatestWindows2012AmiId": {
+          "default": "Windows 2012 AMI:"
+        }
       }
     }
   }
